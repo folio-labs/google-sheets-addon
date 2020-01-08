@@ -1,5 +1,5 @@
 # google-sheets-addon
-Google Sheets add-on for FOLIO
+Google Sheets add-on for FOLIO (beta/example)
 
 The Google Apps Script platform can be used to create add-ons for Google apps (sheets, docs...)
 
