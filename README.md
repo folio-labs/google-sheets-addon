@@ -19,4 +19,5 @@ It is built with two files code.gs (file that contains the logic) and sidebar.ht
 Moving forward, this add-on could be published to the "G-Suite Marketplace" which would allow anyone to easily install it directly from Google Sheets.  It could be expanded to include any needed functionality.  I just started with User Management/Permissions as an experiment.  At Lehigh we have published a Google Sheets add-on - MatchMarc - which calls an OCLC search API.  Publishing this add-on was fairly straightforward.
 
 
-[Screenshot of permissions add-on example](https://github.com/folio-labs/google-sheets-addon/blob/master/assets/screenShotPermissions.png
+![Screenshot of permissions add-on example](https://github.com/folio-labs/google-sheets-addon/blob/master/assets/screenShotPermissions.png "Addon Example")
+
