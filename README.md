@@ -12,7 +12,7 @@ There are a couple of caveats to be aware of:
 2. Google apps scripts does have a limit for running time.  For long running processes this platform is not ideal.
 
 
-In this initial example the script retrieves every existing FOLIO permission and then makes additional API calls to determine who has been given each permissions (see screen shots below).  
+In this initial example (very much a beta version), the script retrieves every existing FOLIO permission and then makes additional API calls to determine who has been given each permissions (see screen shots below).  
 
 It is built with two files code.gs (file that contains the logic) and sidebar.html (user interface/form).  As it is now, to use this add-on you have to pull the files into the script editor (from Google Sheets) and execute it.  
 
