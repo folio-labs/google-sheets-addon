@@ -14,7 +14,7 @@ There are a couple of caveats to be aware of:
 
 In this initial example (very much a beta version), the script retrieves every existing FOLIO permission and then makes additional API calls to determine who has been given each permissions (see screen shots below).  
 
-It is built with two files code.gs (file that contains the logic) and sidebar.html (user interface/form).  As it is now, to use this add-on you have to pull the files into the script editor (from Google Sheets) and execute it.  
+It is built with two files code.gs (file that contains the logic) and sidebar.html (user interface/form).  As it is now, to use this add-on you have to pull the files into the script editor (from Google Sheets) and execute it.  Google provides lots of documenation for this: https://developers.google.com/apps-script/overview
 
 Moving forward, this add-on could be published to the "G-Suite Marketplace" which would allow anyone to easily install it directly from Google Sheets.  It could be expanded to include any needed functionality.  I just started with User Management/Permissions as an experiment.  At Lehigh we have published a Google Sheets add-on - MatchMarc - which calls an OCLC search API.  Publishing this add-on was fairly straightforward.
 
