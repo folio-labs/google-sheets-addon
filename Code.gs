@@ -157,7 +157,7 @@ function startLookup(form) {
           dex++;
         }
         else {
-          grantedToArray[xx][yy] = "  ";
+          //grantedToArray[xx][yy] = "  ";
         }
       });
       yy = yy + 1;
