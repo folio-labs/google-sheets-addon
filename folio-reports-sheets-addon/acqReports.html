@@ -1,0 +1,105 @@
+<html>
+  <head>
+     <meta charset="utf-8">
+     <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+     <style type="text/css">
+        body {
+          font-family: 'Roboto', sans-serif;
+        }
+        .top-logo {margin-bottom:50px;}
+     </style>
+  </head>
+  <body bgcolor="#44546D">
+    <div class="sidebar">
+        <form name="tagForm" id="tagForm">
+          <div class="block form-group">
+            <span style="color:white"><b>FOLIO-Reports CONNECTION:</b></span>
+          </div>
+           <div class="block form-group">
+            <span style="color:white" id="currentConnection"></span>
+          </div>
+          <div class="block form-group">
+            <span style="color:white"><hr></span>
+          </div>
+          <div class="block form-group">
+            <span style="color:white; font-size:1.3em"><b>Fisal Year:</b></span>
+          </div>
+          <div class="block form-group">
+            <select style="width: 85%;" id="fiscalYear" name="fiscalYear" onchange="saveFiscalYear()"></select>
+          </div>
+          <br>
+          <br>
+          <div class="block form-group">
+            <a href="javascript:runPoReport()"><span style="color:white"><b>PO Report</b></span></a>
+           </div>
+           <div class="block form-group">
+            <a href="javascript:runInvoiceReport()"><span style="color:white"><b>Invoice Report</b></span></a>
+           </div>
+        </form>
+    </div>
+</body>
+
+<!-- Load the jQuery library from the Google CDN -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+
+<script>
+
+  var currentFiscalYear = "";
+  
+  //RUNS WHEN THIS SIDEBAR OPENS
+  //GETS CURRENTLY SELECTED FISCAL YEAR, CURRENT FOLIO CONNECTION, AND LIST OF ALL FISCAL YEARS
+  $(function() {
+    google.script.run.withSuccessHandler(setCurrentFiscalYear).getStoredProperty('currentFiscalYear'); 
+    google.script.run.withSuccessHandler(setConnection).getStoredProperty('okapi');
+    google.script.run.withSuccessHandler(showFiscalYears).getFiscalYears(); 
+  });
+  
+  function runInvoiceReport() {
+    google.script.run.getSpent();
+  }
+  
+  function runPoReport() {
+    google.script.run.getPos();
+  }
+  
+  //IF THE SELECTED FISCAL YEAR CHANGES, SAVE IT
+  function saveFiscalYear() {
+    var fiscalYearSelect = document.getElementById("fiscalYear");
+    var selectedFiscalYearUuid = fiscalYearSelect[fiscalYearSelect.selectedIndex].value;
+    google.script.run.setStoredProperty('currentFiscalYear',selectedFiscalYearUuid);
+  }
+  
+  
+  //SAVE CURRENTLY SELECTED FISCAL YEAR
+  function setCurrentFiscalYear(year) {
+    currentFiscalYear = year;
+  }
+  
+  //POPULATE FISCAL YEAR DROP DOWN
+  function showFiscalYears(years) {
+    
+    var fiscalYearSelect = document.getElementById("fiscalYear");
+    //ADD fiscal years TO DROP DOWN BOXES
+    for (var i = 0; i < years.length; i++) {
+      var option = document.createElement('option');
+      option.text = years[i].name + "-" + years[i].code;
+      option.value = years[i].id;
+      fiscalYearSelect.add(option, 0);
+      if (currentFiscalYear == option.value) option.selected = true;
+    }
+  }
+
+  //USED TO DISPLAY THE CURRENTLY SAVED FOLIO
+  //CONNECTION  
+  function setConnection(endpoint) {
+    if (endpoint == null || endpoint == undefined) endpoint = "no connection";
+    document.getElementById('currentConnection').innerHTML=endpoint;
+  }
+  
+
+    
+</script>    
+    
+</html>
+

@@ -1,0 +1,71 @@
+<html>
+  <head>
+     <meta charset="utf-8">
+     <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+     <style type="text/css">
+        body {
+          font-family: 'Roboto', sans-serif;
+        }
+        .top-logo {margin-bottom:50px;}
+     </style>
+  </head>
+  <body bgcolor="#44546D">
+    <div class="sidebar">
+        <form name="tagForm" id="tagForm">
+          <div class="block form-group">
+            <span style="color:white"><b>FOLIO-Reports CONNECTION:</b></span>
+          </div>
+           <div class="block form-group">
+            <span style="color:white" id="currentConnection"></span>
+          </div>
+          <div class="block form-group">
+            <span style="color:white"><hr></span>
+          </div>
+          <div class="block form-group">
+            <span style="color:white;font-size:1.3em"><b>Circulation:</b></span>
+          </div>
+          <div class="block form-group">
+            <a href="javascript:overdueReport()"><span style="color:white"><b>Overdue Report</b></span></a>
+          </div>
+          <div class="block form-group">
+          <a href="javascript:emailsSentReport()"><span style="color:white"><b>Emails Sent</b></span></a>
+          </div>
+        </form>
+    </div>
+</body>
+
+<!-- Load the jQuery library from the Google CDN -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+
+<script>
+
+  var currentFiscalYear = "";
+  
+  //RUNS WHEN THIS SIDEBAR OPENS
+  //GETS CURRENT FOLIO CONNECTION TO DISPLAY
+  $(function() {
+    google.script.run.withSuccessHandler(setConnection).getStoredProperty('okapi');
+  });
+  
+  function overdueReport() {
+    google.script.run.overdueReport();
+  }
+  
+  function emailsSentReport() {
+    google.script.run.emailsSent();
+  }
+  
+  //USED TO DISPLAY THE CURRENTLY SAVED FOLIO
+  //CONNECTION    
+  function setConnection(endpoint) {
+    if (endpoint == null || endpoint == undefined) endpoint = "no connection";
+    document.getElementById('currentConnection').innerHTML=endpoint;
+  }
+  
+
+    
+</script>    
+    
+</html>
+

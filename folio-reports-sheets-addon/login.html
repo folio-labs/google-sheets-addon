@@ -1,0 +1,125 @@
+<html>
+  <head>
+     <meta charset="utf-8">
+     <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+     <style type="text/css">
+        body {
+          font-family: 'Roboto', sans-serif;
+        }
+        .top-logo {margin-bottom:50px;}
+     </style>
+  </head>
+  <body bgcolor="#44546D">
+    <div class="sidebar">
+        <form name="connectionInfo" id="connectionInfo">
+          <div class="block form-group">
+            <span style="color:white"><b>OKAPI ENDPOINT</b></span>
+            <br>
+            <input style="width: 85%;" type="text" id="okapi" name="okapi" placeholder="OKAPI endpoint" value=""/>
+            <br>
+          </div>
+          <br>
+          <div class="block form-group">
+            <span style="color:white"><b>Tenant</b></span>
+            <br>
+            <input style="width: 85%;" type="text" id="tenant" name="tenant" placeholder="tenant" value=""/>
+            <br>
+          </div>
+           <br>
+          <div class="block form-group">
+              <span style="color:white"><b>OKAPI UserId</b></span>
+              <br>
+              <input style="width: 85%;" type="text" id="userid" name="userid" placeholder="userid" value=""/>
+              <br>
+          </div>
+          <br>
+          <div class="block form-group">
+              <span style="color:white"><b>OKAPI Password</b></span>
+              <br>
+              <input style="width: 85%;" type="password" id="password" name="password" placeholder="password" value=""/>
+              <br>
+          </div>
+
+          <div class="block form-group">
+              <input type="button" class="action" value="Save Connection" onclick="saveConnection()" />
+          </div>
+          <div class="block form-group">
+              <input type="button" class="action" value="Clear Connection" onclick="clearConnection()" />
+          </div>
+          <br>
+          <hr>
+          <div id="output"></div>
+        </form>
+        <br>
+        <br>
+       <span style="color:white"><b>v. 3</b></span>
+    </div>
+
+  <!-- Load the jQuery library from the Google CDN -->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+  
+  <script>
+  
+  
+    //RUNS WHEN THIS SIDEBAR OPENS
+    //GETS CURRENTLY SAVED CONNECTION INFO SO IT CAN BE DISPLAYED
+    $(function() {
+      google.script.run.withSuccessHandler(setOkapi).getStoredProperty('okapi');
+      google.script.run.withSuccessHandler(setTenant).getStoredProperty('tenant');
+      google.script.run.withSuccessHandler(setUserid).getStoredProperty('userid');
+      google.script.run.withSuccessHandler(setPassword).getStoredProperty('password');
+    });
+    
+    //REMOVES THE CONNECTION INFO FROM THIS HTML FORM 
+    //AND FROM THE STORED PROPERTIES
+    function clearConnection() {
+      google.script.run.removeStoredProperty('okapi');
+      google.script.run.removeStoredProperty('tenant');
+      google.script.run.removeStoredProperty('userid');
+      google.script.run.removeStoredProperty('password');
+      document.getElementById('okapi').value="";
+      document.getElementById('tenant').value="";
+      document.getElementById('userid').value="";
+      document.getElementById('password').value="";
+    }
+    
+    //SETS FOLIO CONNECTION ON THIS HTML PAGE (IF ALREADY SET)
+    function setOkapi(okapi) {
+      if (okapi == null || okapi == undefined) okapi = "";
+      document.getElementById('okapi').value=okapi;
+    }
+    
+    //SETS FOLIO TENANT ON THIS HTML PAGE (IF ALREADY SET)
+    function setTenant(tenant) {
+      if (tenant == null || tenant == undefined) tenant = "";
+      document.getElementById('tenant').value=tenant;
+    }
+    
+    //SETS FOLIO USERID ON THIS HTML PAGE (IF ALREADY SET)
+    function setUserid(userid) {
+      if (userid == null || userid == undefined) userid = "";
+      document.getElementById('userid').value=userid;
+    }
+    
+    //SETS FOLIO USERID ON THIS PAGE (IF ALREADY SET)
+    function setPassword(password) {
+      if (password == null || tenant == password) tenant = "";
+      document.getElementById('password').value=password;
+    }
+        
+    //CALLS FUNCTION THAT ATTEMPTS TO AUTHENTICATE
+    //AND IF SUCCESSFUL SAVES CONNECTION DETAILS    
+    function saveConnection() {
+        google.script.run.authFolio(document.getElementById('connectionInfo'));
+    }
+   
+  </script> 
+  
+
+
+</body>
+</html>
+
+
+
