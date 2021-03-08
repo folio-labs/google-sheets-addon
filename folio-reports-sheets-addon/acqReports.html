@@ -56,11 +56,11 @@
   });
   
   function runInvoiceReport() {
-    google.script.run.getSpent();
+    google.script.run.withFailureHandler(failedCallToServer).getSpent();
   }
   
   function runPoReport() {
-    google.script.run.getPos();
+    google.script.run.withFailureHandler(failedCallToServer).getPos();
   }
   
   //IF THE SELECTED FISCAL YEAR CHANGES, SAVE IT
@@ -95,6 +95,10 @@
   function setConnection(endpoint) {
     if (endpoint == null || endpoint == undefined) endpoint = "no connection";
     document.getElementById('currentConnection').innerHTML=endpoint;
+  }
+  
+  function failedCallToServer(response) {
+    alert(response + " Unable to establish connection.  ***This may happen if you are logged into multiple Google accounts***.  Please log out of additional Google accounts or use an incognito window and try again.");
   }
   
 
