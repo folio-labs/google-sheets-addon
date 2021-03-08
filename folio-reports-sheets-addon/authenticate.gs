@@ -8,8 +8,21 @@ function authFolio(form) {
    var password = form.password;
    var endpoint = form.okapi;
    var tenant = form.tenant;
+   
+   //REMOVE FINAL '/' IF PRESENT IN THE OKAPI ENDPOINT
+   var lastChar = endpoint.slice(endpoint.length-1);
+   if (lastChar == "/") {
+     endpoint = endpoint.slice(0,-1);
+   }
 
-   ss.toast("...authenticate");
+   
+   try {
+     ss.toast("...authenticate");
+   }
+   catch(e) {
+     Logger.log(e);
+     return "ACCESS ERROR";
+   }
 
    response = auth(userid,password,tenant,endpoint);
 
@@ -28,7 +41,7 @@ function authFolio(form) {
    }
   
   var token = response.getAllHeaders()["x-okapi-token"];
-  return token;
+  return "ok";
   
 
 }
