@@ -53,7 +53,7 @@
         </form>
         <br>
         <br>
-       <span style="color:white"><b>v. 3</b></span>
+       <span style="color:white"><b>v. 4</b></span>
     </div>
 
   <!-- Load the jQuery library from the Google CDN -->
@@ -111,7 +111,11 @@
     //CALLS FUNCTION THAT ATTEMPTS TO AUTHENTICATE
     //AND IF SUCCESSFUL SAVES CONNECTION DETAILS    
     function saveConnection() {
-        google.script.run.authFolio(document.getElementById('connectionInfo'));
+        google.script.run.withFailureHandler(checkConnection).authFolio(document.getElementById('connectionInfo'));
+    }
+    
+    function checkConnection(response) {
+        alert(response + " Unable to establish connection.  ***This may happen if you are logged into multiple Google accounts***.  Please log out of additional Google accounts or use an incognito window and try again.");
     }
    
   </script> 
