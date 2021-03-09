@@ -82,6 +82,21 @@ function overdueReport() {
         + " AND status.name %3C%3E Closed)sortby dueDate/sort.descending&limit=" + limit + "&offset=" + offset;
     var loanResponse = UrlFetchApp.fetch(loanQuery,getOptions);
     var loans = JSON.parse(loanResponse.getContentText()).loans;
+    //Logger.log(token);
+    //Logger.log(loanQuery);
+    //Logger.log(loans);
+    //Logger.log(loanResponse);
+    //Logger.log(loanResponse.getResponseCode());
+    
+    //CHECK THE RESPONSE FROM THE LOAN QUERY
+    var responseCode = loanResponse.getResponseCode();
+    if (responseCode != 200) {
+      Logger.log(Utilities.formatString("Request failed. Expected 200, got %d: %s", responseCode, loanResponse.getContentText()))
+      ui.alert("There was a problem retrieving loans: " + loanResponse.getContentText());
+      return;
+    }
+    
+    
     activeSheet.toast("...processing " + counter);
     if (loans.length == 0) {
       collectionEmpty = true;
@@ -158,6 +173,13 @@ function overdueReport() {
     //collectionEmpty = true;
   
  }
+ 
+   //Logger.log(loansToDisplay);
+ 
+   if (loansToDisplay.length == 0) {
+    spreadsheet.getRange(1, 1).setValue("THE API IS RETURNING '0' LOANS").setFontFamily("Cabin");
+    return;
+  }
 
   //PULL TOGETHER COLUMN HEADERS  
   var colHeaders = [];
