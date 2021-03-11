@@ -1,7 +1,5 @@
 # google-sheets-addon
 Google Sheets add-on for FOLIO 
 
-Sheets addon demo:
-https://www.youtube.com/embed/8CFfiulk-fs
-
-More documentation to come
+# lehigh-reports
+Scaled down versions of Google Apps Scripts acq. reports used at Lehigh.  Removed the inclusion of tags for each PO and Invoice line.
