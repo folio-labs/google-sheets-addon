@@ -8,4 +8,4 @@ Reports:
 * Invoice Report
 
 # lehigh-reports
-Scaled down versions of Google Apps Scripts acq. reports used at Lehigh.  Removed the inclusion of tags for each PO and Invoice line.
+Google Apps Scripts acq. reports used at Lehigh.  
