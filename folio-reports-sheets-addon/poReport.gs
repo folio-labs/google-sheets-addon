@@ -112,13 +112,13 @@ function getPos() {
         activeSheet.toast("...processing...." + counter);
       }
       var amount = row.amount;
-      var sourceInvoiceLine = row.encumbrance.sourcePoLineId;
-      var invoiceQuery = baseOkapi + "/orders/composite-orders/" + row.encumbrance.sourcePurchaseOrderId;
-      var invoiceR = UrlFetchApp.fetch(invoiceQuery,getOptions);
-      var anInvoice = JSON.parse(invoiceR.getContentText());
-      var invoiceLineQuery = baseOkapi + "/orders/order-lines/" + sourceInvoiceLine;
-      var invoiceResponse = UrlFetchApp.fetch(invoiceLineQuery,getOptions);
-      var poLine = JSON.parse(invoiceResponse.getContentText());
+      var sourcePOLine = row.encumbrance.sourcePoLineId;
+      var poQuery = baseOkapi + "/orders/composite-orders/" + row.encumbrance.sourcePurchaseOrderId;
+      var poResult = UrlFetchApp.fetch(poQuery,getOptions);
+      var aPO = JSON.parse(poResult.getContentText());
+      var poLineQuery = baseOkapi + "/orders/order-lines/" + sourcePOLine;
+      var poLineResult = UrlFetchApp.fetch(poLineQuery,getOptions);
+      var poLine = JSON.parse(poLineResult.getContentText());
       var desc = poLine.titleOrPackage;     
       if (poLine.errors != null) return;
      
@@ -135,7 +135,7 @@ function getPos() {
       values.push(collectionOfFunds[row.fromFundId]);
       values.push(poLine.orderFormat);
       values.push(desc);
-      values.push(collectionOfVendors[anInvoice.vendor]);
+      values.push(collectionOfVendors[aPO.vendor]);
       values.push(poLine.receiptStatus);
       var formattedAmount = Utilities.formatString('$%.2f', row.amount);
       values.push(formattedAmount);
