@@ -1,5 +1,5 @@
 # google-sheets-addon
-Google Sheets add-on for FOLIO 
+Google Sheets add-on for FOLIO - beta
 
 Sheets addon demo:
 https://www.youtube.com/embed/8CFfiulk-fs
