@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre1.8.0_202"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="lib/browse-handler.jar"/>
+	<classpathentry kind="lib" path="lib/postgresql-42.2.18.jar"/>
+	<classpathentry kind="lib" path="lib/bsh-2.0b5.jar"/>
+	<classpathentry kind="lib" path="lib/classgraph-4.1.6.jar"/>
+	<classpathentry kind="lib" path="lib/java-cup-11b-runtime.jar"/>
+	<classpathentry kind="lib" path="lib/jopt-simple-5.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2.17.jar"/>
+	<classpathentry kind="lib" path="lib/marc4j-2.9.jar"/>
+	<classpathentry kind="lib" path="lib/MarcImporter.jar"/>
+	<classpathentry kind="lib" path="lib/miglayout15-swing.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.7.16.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
