@@ -1,0 +1,164 @@
+<html><head>
+
+
+     <meta charset="utf-8">
+     <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+     <style type="text/css">
+        body {
+          font-family: 'Roboto', sans-serif;
+        }
+        .top-logo {
+           margin-bottom:50px;
+         }
+
+     </style>
+
+</head>
+<body bgcolor="#44546D">
+      <div class="sidebar">
+         <form name="inventoryInfo" id="inventoryInfo">
+           <div class="block form-group">
+              <span style="color:white"><b>Scan</b></span>
+              <br>
+              <span  style="color:white" id="barcodeNotFound"></span>
+              <br>
+              <input type="text" id="barcode" name="barcode" placeholder="scan barcode" onkeypress="scanInputReceived(event)" value=""/>
+              <br>
+           </div>
+           <br>
+           <span style="color:white"><b>Monitor Order</b></span>
+           <div class="block form-group">
+              <input type="checkbox" id="monitorOrder" name="monitorOrder" value="true">
+           </div>
+           <br>
+           
+
+           
+         <div class="block form-group">
+              <input type="button" class="action" value="re-start" onclick="resetCurrentRow()" />
+         </div>
+         <br>
+         </form>
+         
+         <span style="color:white"><b>Last 10 scanned:</b></span>
+         <br><hr>
+         <span  style="color:white" id="lastScanned"></span>
+         
+
+         <br>
+         
+           <audio id="errorSoundId" >
+   <source src="https://drive.google.com/uc?id=1PhtqES2z_ZDgdU2xRzZYoRucsQ-XS8cK&authuser=0&export=download" autostart="false" width="0" height="0" id="errorSound" enablejavascript="true">
+  </audio>
+         
+
+        
+
+     
+     
+     
+    <!-- Load the jQuery library from the Google CDN -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+    
+
+    <script>
+    
+      $(document).ready(function() {
+        $('input:text').focus(
+        function(){
+            $(this).css({'background-color' : '#e6f2ff'});
+        });
+  
+        $('input:text').blur(
+        function(){
+            $(this).css({'background-color' : '#606060'});
+        });
+        $( "#barcode" ).focus();
+      });
+          
+        var listOfBarcodesLookuped = []
+        
+        
+        function scanInputReceived(e) {
+          if(e.keyCode === 13){
+              e.preventDefault(); // Ensure it is only this code that run
+              barcodeScanned();
+          }
+        }
+        
+        function resetCurrentRow() {
+          google.script.run.resetCurrentRow();
+          $('#barcode').val("");
+          listOfBarcodesLookuped.push("---- restart ----");
+           console.log(listOfBarcodesLookuped.length)
+           if (listOfBarcodesLookuped.length > 10) listOfBarcodesLookuped.shift()
+           console.log(listOfBarcodesLookuped.length)
+           $('#lastScanned').text("");
+           for (i = 0; i < listOfBarcodesLookuped.length; i++) {
+             $('#lastScanned').prepend("<br>" + listOfBarcodesLookuped[i]);
+           }
+          $('#barcodeNotFound').text("");
+        }
+        
+        function barcodeScanned() {
+          //return alert('in function');
+          //findRowNumber
+          if($('#barcode').val().length == 14){
+            $('#barcodeNotFound').text("");
+            google.script.run.withSuccessHandler(findRowComplete).findRowNumber(document.getElementById('inventoryInfo'));
+          }
+          
+        }
+        
+        function findRowComplete(response) {
+         if (response == "FOUND") {
+           var currentBarcode = $('#barcode').val();
+           //$('#lastScanned').prepend("<br>" + currentBarcode);
+           listOfBarcodesLookuped.push(currentBarcode)
+           console.log(listOfBarcodesLookuped.length)
+           if (listOfBarcodesLookuped.length > 10) listOfBarcodesLookuped.shift()
+           console.log(listOfBarcodesLookuped.length)
+           $('#lastScanned').text("");
+           for (i = 0; i < listOfBarcodesLookuped.length; i++) {
+             $('#lastScanned').prepend("<br>" + listOfBarcodesLookuped[i]);
+           }
+           $('#barcode').val("");
+         }
+         else if (response == "OUT OF ORDER") {
+           //#ffff00
+           document.getElementById('errorSoundId').play();
+           $('#barcodeNotFound').text("SCAN OUT OF ORDER");
+           var currentBarcode = $('#barcode').val() + " out of order";
+           //$('#lastScanned').prepend("<br>" + currentBarcode);
+           listOfBarcodesLookuped.push(currentBarcode)
+           console.log(listOfBarcodesLookuped.length)
+           if (listOfBarcodesLookuped.length > 10) listOfBarcodesLookuped.shift()
+           console.log(listOfBarcodesLookuped.length)
+           $('#lastScanned').text("");
+           for (i = 0; i < listOfBarcodesLookuped.length; i++) {
+             $('#lastScanned').prepend("<br>" + listOfBarcodesLookuped[i]);
+           }
+           $('#barcode').val("");
+           
+           
+           //barcodeNotFound
+
+         }
+         else {
+           //#ffff00
+           document.getElementById('errorSoundId').play();
+           $('#barcodeNotFound').text("BARCODE NOT FOUND");
+         
+         }
+        }
+        
+        
+    </script>
+    
+
+    
+
+    
+  </body>
+</html>
