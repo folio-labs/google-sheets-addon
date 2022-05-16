@@ -12,4 +12,4 @@ Reports:
 Google Apps Scripts acq. reports used at Lehigh.  
 
 ### Questions, comments, suggestions welcome:
-Michelle - mis306@lehigh.edu
+Michelle - msuranofsky@gmail.com
