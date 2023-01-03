@@ -71,7 +71,7 @@ function checkStatus(itemBarcode,scannedIndicator) {
 
   var itemPutResponse = UrlFetchApp.fetch(baseOkapi + "/item-storage/items/" + itemId,putOptions);
   for(i in itemPutResponse) {
-     Logger.log(i + ": " + response[i]);
+     Logger.log(i + ": " + itemPutResponse[i]);
   }
   if (itemPutResponse.getResponseCode() != 204) {
       var ui = SpreadsheetApp.getUi();
