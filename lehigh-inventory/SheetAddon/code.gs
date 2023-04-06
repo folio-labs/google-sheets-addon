@@ -46,6 +46,9 @@ function checkStatus(itemBarcode,scannedIndicator) {
   var itemId = theItem.id;
   var status = theItem.status.name
 
+  //ONLY SEND STAT. CAT. CODE TO FOLIO IF THIS
+  //ITEM *NOT* SCANNED & CHECKED OUT
+  //IF NOT SCANNED AND ITEM IS AVAILABLE, IT WASN'T INVENTORIED
   if (status == "Available" && scannedIndicator == false) {
     return status;
   }
@@ -65,10 +68,12 @@ function checkStatus(itemBarcode,scannedIndicator) {
   };
   var putOptions = {
    'method' : 'put',
+   // Convert the JavaScript object to a JSON string.
    'payload' : JSON.stringify(theItem),
    'headers':putHeaders
  };
 
+  Logger.log(baseOkapi + "/item-storage/items/" + itemId);
   var itemPutResponse = UrlFetchApp.fetch(baseOkapi + "/item-storage/items/" + itemId,putOptions);
   for(i in itemPutResponse) {
      Logger.log(i + ": " + itemPutResponse[i]);
@@ -104,7 +109,7 @@ function findRowNumber(form) {
     //CONTINUE - FOUND A MATHING ROW (searchResult)
     //ARE THEY MONITORING THE ORDER?
     var monitorOrder = form.monitorOrder;
-
+    Logger.log(monitorOrder);
 
     //2) IF THE BARCODE WAS FOUND AND THE ORDER DOES NOT MATTER, MARK ROW FOUND & RETURN
     if (monitorOrder == "false" || monitorOrder == null) {
@@ -114,7 +119,6 @@ function findRowNumber(form) {
       userProperties.setProperty("currentInventoryRow", searchResult)
       return "FOUND";
     }
-
 
     if (monitorOrder == "true") {
       Logger.log("-->they are monitoring the order of barcodes");
@@ -193,6 +197,103 @@ function findRowNumber(form) {
 
     }
     
+}
+
+
+function getCheckedOut() {
+
+  var openLoans = {};
+  var ss = SpreadsheetApp.getActive();
+  var loanedSpreadsheet = ss.getSheetByName('checkedout');
+  
+  var range = loanedSpreadsheet.getRange("A1:P99999");
+  range.clearContent();
+  range.clearFormat();
+  range.setFontFamily("Cabin");
+  
+   //AUTHENTICATE
+  // Make a POST request with a JSON payload.
+   var headers = {
+    "Accept" : "application/json,text/plain",
+     "x-okapi-tenant" : "lu"
+  };
+  var data = {
+    'tenant': 'lu',
+    'username': 'lu_admin',
+    'password': 'chohZaeP0c!',
+  };
+  var options = {
+    'method' : 'post',
+    'contentType': 'application/json',
+    'headers':headers,
+    // Convert the JavaScript object to a JSON string.
+    'payload' : JSON.stringify(data)
+  };
+  var response = UrlFetchApp.fetch(baseOkapi + '/authn/login', options);
+  var returnHeaders = response.getHeaders();
+  var token = returnHeaders['x-okapi-token']
+  
+  var offset = 0;
+  var limit = 100;
+  
+  //GET LOANED ITEMS
+  var getHeaders = {
+    "Accept" : "application/json",
+     "x-okapi-tenant" : "lu",
+    "x-okapi-token" : token
+  };
+  var getOptions = {
+     'headers':getHeaders,
+     'muteHttpExceptions': true
+  }
+  var counter = 0;
+  var moreItems = true;
+  var q = 'query=(status.name="Checked Out" not barcode="LEH*")'
+  while (moreItems == true) {
+      if (counter > 500) break;
+      var query = baseOkapi + '/inventory/items?' +  encodeURIComponent(q)  + '&offset=' + offset + '&limit=' + limit;
+      Logger.log(query);
+      var loans = UrlFetchApp.fetch(query,getOptions);
+      var loanedItems = JSON.parse(loans.getContentText()).items;
+      if (loanedItems.length = 0) {
+        moreItems = false;
+      }
+      else {
+      //PUT LOANS IN COLLECTION
+      loanedItems.forEach(function( row, index ) { 
+          var values = []; 
+         //GET PATRON EMAIL
+          var title = row.t 
+          var sourceInvoiceLine = row.encumbrance.sourcePoLineId
+          values.put(row.barcode);
+          values.put(row.callNumber);
+          values.put(row.status.date);
+          values.put(row.status.name);
+          values.put(row.discoverySuppress);
+          values.push(row.permanentLocation.name);
+          values.push(row.title);
+          loans[counter]=values;
+          counter++;
+     });
+      offset = limit + 1;
+      limit = limit + 250;
+    }
+ }
+ 
+  var colHeaders = []
+  var colHeader = []
+  colHeaders.push("Barcode")
+  colHeaders.push("Call Number")
+  colHeaders.push("Status Date")
+  colHeaders.push("Status");
+  colHeaders.push("Discovery Suppress")
+  colHeaders.push("Perm Location")
+  colHeaders.push("Title")
+  
+  
+  loanedSpreadsheet.getRange(1, 1, 1, 7).setValues(colHeader).setBackground("#7ADAEE").setFontFamily("Cabin")
+  loanedSpreadsheet.getRange(2, 1, loans.length, loans[0].length).setValues(loans).setFontFamily("Cabin")
+  loanedSpreadsheet.sort(1, false);
 }
 
 
