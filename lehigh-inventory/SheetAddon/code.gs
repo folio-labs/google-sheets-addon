@@ -54,10 +54,12 @@ function checkStatus(itemBarcode,scannedIndicator) {
   }
   
   if (status == "Available") {
-    theItem.statisticalCodeIds.push('9a173eaa-3b9d-468b-bb85-c02e46f4d4ff');
+    // theItem.statisticalCodeIds.push('9a173eaa-3b9d-468b-bb85-c02e46f4d4ff'); // Jan 2021
+    theItem.statisticalCodeIds.push('69312712-b5db-4f89-8b39-41015be59b8b'); // 2023
   }
   else {
-    theItem.statisticalCodeIds.push('94b67987-48c7-475c-8f58-3b1480298442');
+    // theItem.statisticalCodeIds.push('94b67987-48c7-475c-8f58-3b1480298442'); // Jan 2021
+    theItem.statisticalCodeIds.push('dbea3b4b-ea9b-476b-af36-a87ad3b7c41c'); // 2023
   }
   
    var putHeaders = {
