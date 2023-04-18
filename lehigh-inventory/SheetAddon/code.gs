@@ -46,15 +46,20 @@ function checkStatus(itemBarcode,scannedIndicator) {
   var itemId = theItem.id;
   var status = theItem.status.name
 
+  //ONLY SEND STAT. CAT. CODE TO FOLIO IF THIS
+  //ITEM *NOT* SCANNED & CHECKED OUT
+  //IF NOT SCANNED AND ITEM IS AVAILABLE, IT WASN'T INVENTORIED
   if (status == "Available" && scannedIndicator == false) {
     return status;
   }
   
   if (status == "Available") {
-    theItem.statisticalCodeIds.push('9a173eaa-3b9d-468b-bb85-c02e46f4d4ff');
+    // theItem.statisticalCodeIds.push('9a173eaa-3b9d-468b-bb85-c02e46f4d4ff'); // Jan 2021
+    theItem.statisticalCodeIds.push('69312712-b5db-4f89-8b39-41015be59b8b'); // 2023
   }
   else {
-    theItem.statisticalCodeIds.push('94b67987-48c7-475c-8f58-3b1480298442');
+    // theItem.statisticalCodeIds.push('94b67987-48c7-475c-8f58-3b1480298442'); // Jan 2021
+    theItem.statisticalCodeIds.push('dbea3b4b-ea9b-476b-af36-a87ad3b7c41c'); // 2023
   }
   
    var putHeaders = {
@@ -65,10 +70,12 @@ function checkStatus(itemBarcode,scannedIndicator) {
   };
   var putOptions = {
    'method' : 'put',
+   // Convert the JavaScript object to a JSON string.
    'payload' : JSON.stringify(theItem),
    'headers':putHeaders
  };
 
+  Logger.log(baseOkapi + "/item-storage/items/" + itemId);
   var itemPutResponse = UrlFetchApp.fetch(baseOkapi + "/item-storage/items/" + itemId,putOptions);
   for(i in itemPutResponse) {
      Logger.log(i + ": " + itemPutResponse[i]);
@@ -104,7 +111,7 @@ function findRowNumber(form) {
     //CONTINUE - FOUND A MATHING ROW (searchResult)
     //ARE THEY MONITORING THE ORDER?
     var monitorOrder = form.monitorOrder;
-
+    Logger.log(monitorOrder);
 
     //2) IF THE BARCODE WAS FOUND AND THE ORDER DOES NOT MATTER, MARK ROW FOUND & RETURN
     if (monitorOrder == "false" || monitorOrder == null) {
@@ -114,7 +121,6 @@ function findRowNumber(form) {
       userProperties.setProperty("currentInventoryRow", searchResult)
       return "FOUND";
     }
-
 
     if (monitorOrder == "true") {
       Logger.log("-->they are monitoring the order of barcodes");
