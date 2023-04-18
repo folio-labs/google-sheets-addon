@@ -2,12 +2,12 @@
   PROTOTYPE CREATED 2-10-2021
   AUTHOR: MS
   PURPOSE: POC - CREATE INVOICES FROM A LIST OF PURCHASE ORDERS
-  DURING THE PO LOOKUP STEP - THE CELL TURNS RED OF THE PO IS 
-  ALREADY ASSOCIATED WITH AN EXISTING INVOICE
 */
-var baseOkapi = "https://test-okapi.folio.indexdata.com";
-var baseFolio = "https://test.folio.indexdata.com";
+//var baseOkapi = "https://lehigh-test-okapi.folio.indexdata.com";
+//var baseFolio = "https://lehigh-test.folio.indexdata.com";
 
+var baseOkapi = "https://lehigh-okapi.folio.indexdata.com";
+var baseFolio = "https://lehigh.folio.indexdata.com";
 
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
@@ -36,7 +36,6 @@ function createTemplate() {
       //IN CASE TAB WITH THIS NAME ALREADY EXISTS
       settingsSheet.setName("Invoices" + rand);
     }
-
                                       
     var outputRange = settingsSheet.getRange(1, 1, 37, 15);
     outputRange.getCell(1,1).setValue("INVOICE DATE (yyyy-mm-dd):").setFontWeight("bold").setBackground("#F5F5F5");
@@ -76,7 +75,8 @@ function payThese() {
   
     
   
-  var token = authenticate(baseOkapi);
+  var token = FOLIOAUTHLIBRARY.authenticate(baseOkapi);
+  //LOOP THROUGH EACH ROW
   
   var listOfInvoices = {}
   var listOfPos = {};
@@ -103,8 +103,9 @@ function payThese() {
     Logger.log(aPo.purchaseOrders[0].vendor);
     
    
-    
-    var poLineQuery = baseOkapi + "/orders/order-lines?limit=30&query=(poNumber='" + poNumber  +"')";
+    purchaseOrderUuid = aPo.purchaseOrders[0].id;
+    var poLineQuery = baseOkapi + "/orders/order-lines?limit=30&query=(purchaseOrderId==" + purchaseOrderUuid + ")";
+    //var poLineQuery = baseOkapi + "/orders/order-lines?limit=30&query=(poNumber='" + poNumber  +"')";
     Logger.log(poLineQuery)
 
     var poLineResults = UrlFetchApp.fetch(poLineQuery,getOptions);
@@ -151,13 +152,18 @@ function payThese() {
       var fundCode = aFund.code;
       Logger.log("ADDING THIS FUND CODE--> " + fundCode);
       invoiceLine.fundDistributions[0].code = fundCode;
+    
     }
     Logger.log("AFTER--->" + JSON.stringify(invoiceLine))
 
     //IF THE INVOICE LINE CONTAINS NO FUND DISTRIBUTIONS,
     //THE PO MAY NOT HAVE HAD ANY (E.G. ONGOING)
     //LOOK FOR A TAG THAT STARTS WITH 
+    //ADDED 3-19-21
     if (invoiceLine.fundDistributions == null || invoiceLine.fundDistributions.length == 0) {
+      if (onePoLine.tags == null) {
+        SpreadsheetApp.getUi().alert("PO Line Number " + onePoLine.poLineNumber + " has no tags, so this will fail; check that Fund Distribution is assigned.");
+      }
       var tags = onePoLine.tags.tagList;
       for (var tag in tags) {
         if (tags[tag].includes("fund-") || tags[tag].includes("FUND-")) {
@@ -181,6 +187,7 @@ function payThese() {
         }
       }
     }    
+    
     
     if (!range.getCell(i+1, 7).isBlank()) { 
       invoiceLine.subTotal = amount;
@@ -289,7 +296,7 @@ function lookupPOs() {
   Logger.log("firstRow "+firstRow);
   Logger.log("numRows "+numRows);
   
-  var token = authenticate(baseOkapi);
+  var token = FOLIOAUTHLIBRARY.authenticate(baseOkapi);
   
   var getHeaders = {
     "Accept" : "application/json",
