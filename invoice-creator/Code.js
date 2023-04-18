@@ -3,11 +3,6 @@
   AUTHOR: MS
   PURPOSE: POC - CREATE INVOICES FROM A LIST OF PURCHASE ORDERS
 */
-//var baseOkapi = "https://lehigh-test-okapi.folio.indexdata.com";
-//var baseFolio = "https://lehigh-test.folio.indexdata.com";
-
-var baseOkapi = "https://lehigh-okapi.folio.indexdata.com";
-var baseFolio = "https://lehigh.folio.indexdata.com";
 
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
@@ -60,6 +55,18 @@ function createTemplate() {
 
 }
 
+function authenticate() {
+  let config = {
+    environment: 'prod'
+  }
+  PropertiesService.getScriptProperties().setProperty("config", JSON.stringify(config));
+  config.username = PropertiesService.getScriptProperties().getProperty("username");
+  config.password = Utilities.newBlob(Utilities.base64Decode(
+      PropertiesService.getScriptProperties().getProperty("password")))
+      .getDataAsString();
+  FOLIOAUTHLIBRARY.authenticateAndSetHeaders(config);
+}
+
 function payThese() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet();
   //var range = sheet.getActiveRange()
@@ -73,9 +80,9 @@ function payThese() {
   
   var columnValues = range.getValues();
   
-    
-  
-  var token = FOLIOAUTHLIBRARY.authenticate(baseOkapi);
+  authenticate();
+  let config = JSON.parse(PropertiesService.getScriptProperties().getProperty("config"));
+
   //LOOP THROUGH EACH ROW
   
   var listOfInvoices = {}
@@ -88,23 +95,18 @@ function payThese() {
     
     poNumber = range.getCell(i+1, 2).getValue();
           
-    var poQuery = baseOkapi + "/orders/composite-orders?limit=30&query=(poNumber==" + poNumber  + ")"
+    var poQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+      "/orders/composite-orders?limit=30&query=(poNumber==" + poNumber  + ")"
     Logger.log(poQuery)
-    var getHeaders = {
-      "Accept" : "application/json",
-      "x-okapi-tenant" : "lu",
-      "x-okapi-token" : token
-    };
-    var getOptions = {
-      'headers':getHeaders
-    }
+    let getOptions = FOLIOAUTHLIBRARY.getHttpGetOptions();
     var onePoQueryResults = UrlFetchApp.fetch(poQuery,getOptions);
     var aPo = JSON.parse(onePoQueryResults.getContentText());
     Logger.log(aPo.purchaseOrders[0].vendor);
     
    
     purchaseOrderUuid = aPo.purchaseOrders[0].id;
-    var poLineQuery = baseOkapi + "/orders/order-lines?limit=30&query=(purchaseOrderId==" + purchaseOrderUuid + ")";
+    var poLineQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+      "/orders/order-lines?limit=30&query=(purchaseOrderId==" + purchaseOrderUuid + ")";
     //var poLineQuery = baseOkapi + "/orders/order-lines?limit=30&query=(poNumber='" + poNumber  +"')";
     Logger.log(poLineQuery)
 
@@ -144,7 +146,8 @@ function payThese() {
     
     Logger.log("BEFORE--->" + JSON.stringify(invoiceLine))
     if (invoiceLine.fundDistributions[0] != null && invoiceLine.fundDistributions[0].code == null) {
-      var fundQuery = baseOkapi + "/finance/funds/" + onePoLine.fundDistribution[0].fundId;
+      var fundQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+        "/finance/funds/" + onePoLine.fundDistribution[0].fundId;
       Logger.log(fundQuery);
       var fundResults = UrlFetchApp.fetch(fundQuery,getOptions);
       Logger.log("FOUND CODE FOUND---->" + fundResults);
@@ -171,7 +174,8 @@ function payThese() {
           var tagArray = tags[tag].split("-");
           var fundCode = tagArray[1];
           Logger.log("USING FUND CODE: " + fundCode);
-          var fundQuery = baseOkapi + "/finance/funds?limit=1000&query=(code=" + fundCode + ")";
+          var fundQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+            "/finance/funds?limit=1000&query=(code=" + fundCode + ")";
           Logger.log(fundQuery);
           var fundResults = UrlFetchApp.fetch(fundQuery,getOptions);
           Logger.log("FOUND CODE FOUND---->" + fundResults);
@@ -216,13 +220,9 @@ function payThese() {
 
     
     //POST INVOICE
-    var createInvoiceQuery = baseOkapi +'/invoice/invoices';
-    var postHeaders = {
-      "Accept" : "application/json",
-      "Content-type" : "application/json",
-      "x-okapi-tenant" : "lu",
-      "x-okapi-token" : token
-    };
+    var createInvoiceQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) 
+      +'/invoice/invoices';
+    let headers = FOLIOAUTHLIBRARY.getHttpGetHeaders();
     var postOptions = {
        'headers':postHeaders,
        'method' : 'post',
@@ -245,7 +245,8 @@ function payThese() {
         }
         Logger.log("INVOICE LINE");
         Logger.log(JSON.stringify(invoiceLine));
-        var invoiceLineCreateQuery = baseOkapi + '/invoice/invoice-lines'
+        var invoiceLineCreateQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+          '/invoice/invoice-lines'
         var createdInvoiceLineResponse = UrlFetchApp.fetch(invoiceLineCreateQuery, postOptions)
         
         Logger.log("LIST OF POS " + JSON.stringify(listOfPos));
@@ -296,16 +297,11 @@ function lookupPOs() {
   Logger.log("firstRow "+firstRow);
   Logger.log("numRows "+numRows);
   
-  var token = FOLIOAUTHLIBRARY.authenticate(baseOkapi);
+  authenticate();
+  let config = JSON.parse(PropertiesService.getScriptProperties().getProperty("config"));
   
-  var getHeaders = {
-    "Accept" : "application/json",
-     "x-okapi-tenant" : "lu",
-    "x-okapi-token" : token
-  };
-  var getOptions = {
-     'headers':getHeaders
-  }
+  let headers = FOLIOAUTHLIBRARY.getHttpGetHeaders();
+  let getOptions = FOLIOAUTHLIBRARY.getHttpGetOptions();
   
   for (var i = 1; i < numRows; i++) {
     var absoluteRow = firstRow + i;
@@ -317,7 +313,8 @@ function lookupPOs() {
     //outputRange.getCell(i+2,2).setNumberFormat("###,##00.00").setValue(poLineAmount).setBackgroundColor("#EAEAEA")
     //outputRange.getCell(i+2,3).setNumberFormat("###,##00.00").setValue(poLineAmount)
     
-    var poQuery = baseOkapi + "/orders/composite-orders?query=(poNumber=" + poNumber + ")";
+    var poQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+      "/orders/composite-orders?query=(poNumber=" + poNumber + ")";
     var poResponse = UrlFetchApp.fetch(poQuery,getOptions);
     var poCollection = JSON.parse(poResponse.getContentText()).purchaseOrders;
     if (poCollection.length == 0) {
@@ -330,7 +327,8 @@ function lookupPOs() {
     var vendorUuid = po.vendor;
     var poUuid = po.id;
     //GET THE LINE
-    var poLinQuery = baseOkapi + "/orders/order-lines?query=(purchaseOrderId=" + poUuid + ")";
+    var poLinQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+      "/orders/order-lines?query=(purchaseOrderId=" + poUuid + ")";
     var poLineResponse = UrlFetchApp.fetch(poLinQuery,getOptions);
     var poLineCollection = JSON.parse(poLineResponse.getContentText()).poLines;
     Logger.log(poLineCollection[0]);
@@ -340,14 +338,16 @@ function lookupPOs() {
     Logger.log(encumbered);
     
     //GET THE VENDOR
-    var vendorQuery = baseOkapi + "/organizations-storage/organizations/" + vendorUuid;
+    var vendorQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+      "/organizations/organizations/" + vendorUuid;
     Logger.log(vendorQuery);
     var vendorResonse = UrlFetchApp.fetch(vendorQuery,getOptions);
     var vendor = JSON.parse(vendorResonse.getContentText());
     Logger.log(vendor);
     
     //IS THIS PO LINE ALREADY ATTACHED TO AN INVOICE
-    var invoiceQuery = baseOkapi + "/invoice/invoice-lines?query=(poLineId=" + poLine.id + ")";
+    var invoiceQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+      "/invoice/invoice-lines?query=(poLineId=" + poLine.id + ")";
     var invoiceResponse = UrlFetchApp.fetch(invoiceQuery,getOptions);
     var invoices = JSON.parse(invoiceResponse.getContentText());
     
