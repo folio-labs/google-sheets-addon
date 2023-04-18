@@ -53,13 +53,14 @@ function getSpent() {
     "x-okapi-token" : token
   };
   var getOptions = {
-     'headers':getHeaders
+     'headers':getHeaders,
+     'muteHttpExceptions': true
   };
   
   //GET THE CURRENT FISCAL YEAR
   //4 --> UUID OF THE LEDGER
   //TODO
-  var fiscalYearQuery = baseOkapi + "/finance/ledgers/3db30e78-01f7-4d14-a30e-dcff96f7ecb2/current-fiscal-year?limit=1000";
+  var fiscalYearQuery = baseOkapi + "/finance/ledgers/cdef2609-ba0a-4f42-abfb-14d315698d03/current-fiscal-year?limit=1000";
   var fiscalYearResponse = UrlFetchApp.fetch(fiscalYearQuery,getOptions);
   var fiscalYear = JSON.parse(fiscalYearResponse.getContentText());
   var fiscalYearCode = fiscalYear['code'];
@@ -92,14 +93,26 @@ function getSpent() {
   dataAll.forEach(function( row, index ) { 
      var values = []; 
      var amount = row.amount;
+     Logger.log(row);
      var sourceInvoiceLine = row.encumbrance.sourcePoLineId;
      var poQuery = baseOkapi + "/orders/composite-orders/" + row.encumbrance.sourcePurchaseOrderId;
+     Logger.log(poQuery);
      var poResponse = UrlFetchApp.fetch(poQuery,getOptions);
-     var aPO = JSON.parse(poResponse.getContentText());
+     //ORDER NO LONGER EXISTS (IT'S IN THE ENCUMBRANCE, BUT ORDER HAS BEEN DELETED)
+     if (poResponse.getResponseCode == 404) {
+       var aPO = {};
+       var poLine = {};
+       aPO.vendor = "PO DELETED";
+       poLine.orderFormat = "PO DELETED"
+     }
+     else {
+      var aPO = JSON.parse(poResponse.getContentText());
+      var poLineQuery = baseOkapi + "/orders/order-lines/" + sourceInvoiceLine;
+      var poLineResponse = UrlFetchApp.fetch(poLineQuery,getOptions);
+      var poLine = JSON.parse(poLineResponse.getContentText()); 
+     }
      
-     var poLineQuery = baseOkapi + "/orders/order-lines/" + sourceInvoiceLine;
-     var poLineResponse = UrlFetchApp.fetch(poLineQuery,getOptions);
-     var poLine = JSON.parse(poLineResponse.getContentText());     
+    
      
      var desc = poLine.titleOrPackage;   
      var tags = poLine.tags;
@@ -159,8 +172,33 @@ function getSpent() {
      
      var formattedAmountExpended = Utilities.formatString('$%.2f', row.encumbrance.amountExpended);
      values.push(formattedAmountExpended);
-     
+
+     values.push(poLine.id);
+//Added Vendor Invoice Number by chm213 on November 15, 2021
+    var purchaseOrderLineId = row.encumbrance.sourcePoLineId;
+    var invoiceLineQuery = baseOkapi + "/invoice/invoice-lines" + "?query=(poLineId==" + purchaseOrderLineId + ")";
+    Logger.log("invoiceLineQuery:" + invoiceLineQuery);
+
+    var invoiceResponse = UrlFetchApp.fetch(invoiceLineQuery,getOptions);
+    var invoices = JSON.parse(invoiceResponse.getContentText()).invoiceLines;  
+    if (invoices.length > 0) {
+           Logger.log("Invoice Lines:" + invoices[0]);           
+           var theInvoiceId = invoices[0].invoiceId;
+           Logger.log("InvoiceId:" + theInvoiceId);  
+           var invoiceQuery = baseOkapi + "/invoice/invoices/" + theInvoiceId
+           var invoiceR = UrlFetchApp.fetch(invoiceQuery,getOptions);
+           var anInvoice = JSON.parse(invoiceR.getContentText());
+           Logger.log(anInvoice);
+           values.push(anInvoice.vendorInvoiceNo);
+    } else values.push(" ");
      purchaseOrders[index]=values;
+
+    // Added POL Creator by msl321 for Erin on Jan 9, 2023
+    var creatorId = poLine.metadata.createdByUserId;
+    var userQuery = baseOkapi + "/users/" + creatorId;
+    var userResponse = UrlFetchApp.fetch(userQuery,getOptions);
+    var username = JSON.parse(userResponse.getContentText()).username;
+    values.push(username);
      
   })
    
@@ -171,7 +209,7 @@ function getSpent() {
   colHeaders.push("Fiscal Year")
   colHeaders.push("Trans Type")
   colHeaders.push("Encumbrance Status");
-  colHeaders.push("PO Number")
+  colHeaders.push("POLine Number")
   colHeaders.push("Object Code")
   colHeaders.push("Project Code")
   colHeaders.push("Fund")
@@ -183,12 +221,15 @@ function getSpent() {
   colHeaders.push("Encumbrance")
   colHeaders.push("Initial Encumbrance")
   colHeaders.push("Amount Expended")
+  colHeaders.push("line uuid")
+  colHeaders.push("Vendor Invoice No")
+  colHeaders.push("POLine Created By")
   
   colHeader.push(colHeaders)
    
   var date = Utilities.formatDate(new Date(), "GMT+1", "MM/dd/yyyy HH:mm:ss")  
   
-  spreadsheet.getRange(1, 1, 1, 16).setValues(colHeader).setBackground("#7ADAEE").setFontFamily("Cabin")
+  spreadsheet.getRange(1, 1, 1, 19).setValues(colHeader).setBackground("#7ADAEE").setFontFamily("Cabin")
   spreadsheet.getRange(2, 1, purchaseOrders.length, purchaseOrders[0].length).setValues(purchaseOrders).setFontFamily("Cabin")
   spreadsheet.setName("FOLIO POs: " + date);
   spreadsheet.sort(1, false);
