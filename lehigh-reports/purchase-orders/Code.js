@@ -9,10 +9,19 @@ function onInstall() {
   onOpen();
 }
 
+function authenticate() {
+  let config = {
+    'environment': 'prod'
+  }
+  PropertiesService.getScriptProperties().setProperty("config", JSON.stringify(config));
+  config.username = PropertiesService.getScriptProperties().getProperty("username");
+  config.password = Utilities.newBlob(Utilities.base64Decode(
+      PropertiesService.getScriptProperties().getProperty("password")))
+      .getDataAsString();
+  FOLIOAUTHLIBRARY.authenticateAndSetHeaders(config);
+}
+
 function getSpent() {
-  var baseOkapi = 'https://okapi-bugfest-honeysuckle.folio.ebsco.com';  //1 -> YOUR OKAPI ENDPOINT
-  var tenant = "fs09000000"; //2-> TENANT
-  
   var spreadsheet = SpreadsheetApp.getActiveSheet();
 
   //CLEAR OLD DATA AND FORMATS FROM THIS SHEET
@@ -26,47 +35,21 @@ function getSpent() {
   var collectionOfFunds = [];
   var collectionOfVendors = [];
   
-  //AUTHENTICATE
-  var headers = {
-    "Accept" : "application/json,text/plain",
-     "x-okapi-tenant" : tenant
-  };
-  //3 --> YOUR USERID AND PASSWORD
-  var data = {
-    'tenant': tenant,
-    'username': '',
-    'password': '',
-  };
-  var options = {
-    'method' : 'post',
-    'contentType': 'application/json',
-    'headers': headers,
-    'payload' : JSON.stringify(data)
-  };
-  var response = UrlFetchApp.fetch(baseOkapi + '/authn/login', options);
-  var returnHeaders = response.getHeaders();
-  var token = returnHeaders['x-okapi-token'];
-  
-  var getHeaders = {
-    "Accept" : "application/json",
-     "x-okapi-tenant" : tenant,
-    "x-okapi-token" : token
-  };
-  var getOptions = {
-     'headers':getHeaders,
-     'muteHttpExceptions': true
-  };
-  
+  authenticate();
+  let config = JSON.parse(PropertiesService.getScriptProperties().getProperty("config"));
+  let getOptions = FOLIOAUTHLIBRARY.getHttpGetOptions();
   //GET THE CURRENT FISCAL YEAR
   //4 --> UUID OF THE LEDGER
   //TODO
-  var fiscalYearQuery = baseOkapi + "/finance/ledgers/cdef2609-ba0a-4f42-abfb-14d315698d03/current-fiscal-year?limit=1000";
+  var fiscalYearQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+    "/finance/ledgers/cdef2609-ba0a-4f42-abfb-14d315698d03/current-fiscal-year?limit=1000";
   var fiscalYearResponse = UrlFetchApp.fetch(fiscalYearQuery,getOptions);
   var fiscalYear = JSON.parse(fiscalYearResponse.getContentText());
   var fiscalYearCode = fiscalYear['code'];
   
   //GET ALL OF THE ACCOUNTS
-  var bAccountQuery = baseOkapi + "/finance/budgets?limit=1000&query=(fiscalYearId==" + fiscalYear['id'] + ") sortby name";
+  var bAccountQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+    "/finance/budgets?limit=1000&query=(fiscalYearId==" + fiscalYear['id'] + ") sortby name";
   var accounts = UrlFetchApp.fetch(bAccountQuery,getOptions);
   var accountsCollection = JSON.parse(accounts.getContentText()).budgets;
   for (i = 0; i < accountsCollection.length; i++) {
@@ -75,7 +58,8 @@ function getSpent() {
   }
   
   //GET ALL OF VENDORS
-  var vendorQuery = baseOkapi + "/organizations-storage/organizations?limit=99999";
+  var vendorQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+    "/organizations/organizations?limit=99999";
   var vendors = UrlFetchApp.fetch(vendorQuery,getOptions);
   var vendorCollection = JSON.parse(vendors.getContentText()).organizations;
   for (i = 0; i < vendorCollection.length; i++) {
@@ -84,7 +68,8 @@ function getSpent() {
   }
   
   //GET ALL ENCUMBRANCES
-  var spentQuery = baseOkapi + "/finance/transactions?limit=99999&query=(fiscalYearId==" + fiscalYear['id'] + " and transactionType='Encumbrance') sortby transactionDate/sort.descending"
+  var spentQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+    "/finance/transactions?limit=99999&query=(fiscalYearId==" + fiscalYear['id'] + " and transactionType='Encumbrance') sortby transactionDate/sort.descending"
   var spentResponse = UrlFetchApp.fetch(spentQuery,getOptions);
   var dataAll = JSON.parse(spentResponse.getContentText()).transactions;
   var purchaseOrders = [];
@@ -95,7 +80,8 @@ function getSpent() {
      var amount = row.amount;
      Logger.log(row);
      var sourceInvoiceLine = row.encumbrance.sourcePoLineId;
-     var poQuery = baseOkapi + "/orders/composite-orders/" + row.encumbrance.sourcePurchaseOrderId;
+     var poQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+       "/orders/composite-orders/" + row.encumbrance.sourcePurchaseOrderId;
      Logger.log(poQuery);
      var poResponse = UrlFetchApp.fetch(poQuery,getOptions);
      //ORDER NO LONGER EXISTS (IT'S IN THE ENCUMBRANCE, BUT ORDER HAS BEEN DELETED)
@@ -107,7 +93,8 @@ function getSpent() {
      }
      else {
       var aPO = JSON.parse(poResponse.getContentText());
-      var poLineQuery = baseOkapi + "/orders/order-lines/" + sourceInvoiceLine;
+      var poLineQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+        "/orders/order-lines/" + sourceInvoiceLine;
       var poLineResponse = UrlFetchApp.fetch(poLineQuery,getOptions);
       var poLine = JSON.parse(poLineResponse.getContentText()); 
      }
@@ -126,7 +113,8 @@ function getSpent() {
      var circCount = "";
      if (poLine.orderFormat == "Physical Resource") {
        //GET ITEM
-       var itemQuery = baseOkapi + "/inventory/items?query=(purchaseOrderLineIdentifier==" + poLine.id + ")";
+       var itemQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+         "/inventory/items?query=(purchaseOrderLineIdentifier==" + poLine.id + ")";
        var itemResponse = UrlFetchApp.fetch(itemQuery,getOptions);
        var items = JSON.parse(itemResponse.getContentText()).items;
        if (items.length > 0) {
@@ -135,7 +123,8 @@ function getSpent() {
          if (items[0].barcode != null && items[0].barcode != "") {
              Logger.log(items[0].barcode);
              //circCount = "lookup";
-             var loanQuery = baseOkapi + "/circulation/loans?query=(itemId==" + items[0].id + ")";
+             var loanQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+               "/circulation/loans?query=(itemId==" + items[0].id + ")";
              var loanResponse = UrlFetchApp.fetch(loanQuery,getOptions);
              circCount = JSON.parse(loanResponse.getContentText()).totalRecords;
          }
@@ -176,7 +165,8 @@ function getSpent() {
      values.push(poLine.id);
 //Added Vendor Invoice Number by chm213 on November 15, 2021
     var purchaseOrderLineId = row.encumbrance.sourcePoLineId;
-    var invoiceLineQuery = baseOkapi + "/invoice/invoice-lines" + "?query=(poLineId==" + purchaseOrderLineId + ")";
+    var invoiceLineQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+      "/invoice/invoice-lines" + "?query=(poLineId==" + purchaseOrderLineId + ")";
     Logger.log("invoiceLineQuery:" + invoiceLineQuery);
 
     var invoiceResponse = UrlFetchApp.fetch(invoiceLineQuery,getOptions);
@@ -185,7 +175,8 @@ function getSpent() {
            Logger.log("Invoice Lines:" + invoices[0]);           
            var theInvoiceId = invoices[0].invoiceId;
            Logger.log("InvoiceId:" + theInvoiceId);  
-           var invoiceQuery = baseOkapi + "/invoice/invoices/" + theInvoiceId
+           var invoiceQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+             "/invoice/invoices/" + theInvoiceId
            var invoiceR = UrlFetchApp.fetch(invoiceQuery,getOptions);
            var anInvoice = JSON.parse(invoiceR.getContentText());
            Logger.log(anInvoice);
@@ -195,7 +186,8 @@ function getSpent() {
 
     // Added POL Creator by msl321 for Erin on Jan 9, 2023
     var creatorId = poLine.metadata.createdByUserId;
-    var userQuery = baseOkapi + "/users/" + creatorId;
+    var userQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
+      "/users/" + creatorId;
     var userResponse = UrlFetchApp.fetch(userQuery,getOptions);
     var username = JSON.parse(userResponse.getContentText()).username;
     values.push(username);
