@@ -1,4 +1,4 @@
-function authenticate(baseOkapi) {
+function authenticateExample(baseOkapi) {
   //AUTHENTICATE
   // Make a POST request with a JSON payload.
    var headers = {
