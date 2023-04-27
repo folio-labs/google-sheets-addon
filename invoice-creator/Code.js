@@ -255,7 +255,8 @@ function payThese() {
         var searchResult = findInRow(listOfPos[invoiceLine.poLineId],range)
         Logger.log("search result" + searchResult);
         //var searchResult = columnValues.findIndex(createdInvoice.vendorInvoiceNo);
-        range.getCell(searchResult, 11).setValue(baseFolio + "/invoice/view/" + createdInvoice.id);
+        range.getCell(searchResult, 11).setValue(
+          FOLIOAUTHLIBRARY.getBaseFolio(config.environment) + "/invoice/view/" + createdInvoice.id);
 
     
     }
