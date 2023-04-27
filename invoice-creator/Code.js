@@ -222,9 +222,9 @@ function payThese() {
     //POST INVOICE
     var createInvoiceQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) 
       +'/invoice/invoices';
-    let headers = FOLIOAUTHLIBRARY.getHttpGetHeaders();
+    let postHeaders = FOLIOAUTHLIBRARY.getHttpPostHeaders();
     var postOptions = {
-       'headers':postHeaders,
+       'headers': postHeaders,
        'method' : 'post',
        "payload":JSON.stringify(invoiceToInsert)
     }
@@ -239,7 +239,7 @@ function payThese() {
         var invoiceLine = invoiceLines[i];
         invoiceLine.invoiceId = createdInvoice.id;
         postOptions = {
-         'headers':postHeaders,
+         'headers': postHeaders,
          'method' : 'post',
          "payload":JSON.stringify(invoiceLine)
         }
