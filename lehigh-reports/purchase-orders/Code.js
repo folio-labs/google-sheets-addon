@@ -185,13 +185,17 @@ function getSpent() {
      purchaseOrders[index]=values;
 
     // Added POL Creator by msl321 for Erin on Jan 9, 2023
+    if (poLine.metadata) {
     var creatorId = poLine.metadata.createdByUserId;
     var userQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
       "/users/" + creatorId;
-    var userResponse = UrlFetchApp.fetch(userQuery,getOptions);
+      var userResponse = UrlFetchApp.fetch(userQuery, getOptions);
     var username = JSON.parse(userResponse.getContentText()).username;
     values.push(username);
-     
+    }
+    else {
+      values.push("unknown user");
+    }
   })
    
    
