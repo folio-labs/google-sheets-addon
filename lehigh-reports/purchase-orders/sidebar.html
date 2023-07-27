@@ -1,0 +1,69 @@
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+  <style type="text/css">
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #445460;
+    }
+
+    .top-logo {
+      margin-bottom: 50px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar">
+
+    <form name="inventoryInfo" id="inventoryInfo">
+      <span style="color:white"><b>Fiscal Year</b></span>
+      <div class="block form-group">
+        <select id="fiscal_year" name="fiscal_year">
+      </div>
+      <br>
+
+      <div class="block form-group">
+        <input type="button" class="action" value="Load Invoices" onclick="loadOrders()" />
+      </div>
+      <br>
+    </form>
+
+    <!-- Load the jQuery library from the Google CDN -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+
+    <script>
+      $(document).ready(function () {
+        loadFiscalYears();
+      });
+
+      function loadFiscalYears() {
+        function onSuccess(fiscalYearsResponseText) {
+          var fiscalYearsResult = JSON.parse(fiscalYearsResponseText);
+          var fiscal_years = fiscalYearsResult.fiscalYears;
+
+          console.info("fiscal years: " + fiscal_years);
+          fiscal_years.forEach(function (fiscal_year, index) {
+            console.log("fiscal year: " + JSON.stringify(fiscal_year));
+            let option = $("<option/>")
+              .attr("value", fiscal_year.id)
+              .text(fiscal_year.name);
+            $("#fiscal_year").append(option);
+          });
+        }
+        let fiscal_years = google.script.run
+          .withSuccessHandler(onSuccess)
+          .getFiscalYearOptions();
+      }
+
+      function loadOrders() {
+        let fiscal_year_id = $("#fiscal_year option").filter(":selected").attr("value");
+        google.script.run.getOrders(fiscal_year_id);
+      }
+    </script>
+
+</body>
+</html>

@@ -1,8 +1,18 @@
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('FOLIO Reports')
-      .addItem('Refresh FOLIO transactions', 'getSpent')
+    .addItem('Show Sidebar', 'showSidebar')
       .addToUi();
+}
+
+function showSidebar() {  // eslint-disable-line no-unused-vars
+  authenticate();
+  preloadSidebarData();
+  var html = HtmlService.createHtmlOutputFromFile('sidebar')
+    .setTitle('Purchase Orders')
+    .setWidth(500);
+  SpreadsheetApp.getUi()
+    .showSidebar(html);    
 }
 
 function onInstall() {
@@ -21,7 +31,7 @@ function authenticate() {
   FOLIOAUTHLIBRARY.authenticateAndSetHeaders(config);
 }
 
-function getSpent() {
+function getOrders(fiscalYearId = null) {
   var spreadsheet = SpreadsheetApp.getActiveSheet();
 
   //CLEAR OLD DATA AND FORMATS FROM THIS SHEET
@@ -38,13 +48,14 @@ function getSpent() {
   authenticate();
   let config = JSON.parse(PropertiesService.getScriptProperties().getProperty("config"));
   let getOptions = FOLIOAUTHLIBRARY.getHttpGetOptions();
-  //GET THE CURRENT FISCAL YEAR
-  //4 --> UUID OF THE LEDGER
-  //TODO
-  var fiscalYearQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + 
-    "/finance/ledgers/cdef2609-ba0a-4f42-abfb-14d315698d03/current-fiscal-year?limit=1000";
-  var fiscalYearResponse = UrlFetchApp.fetch(fiscalYearQuery,getOptions);
-  var fiscalYear = JSON.parse(fiscalYearResponse.getContentText());
+
+  let fiscalYear;
+  if (fiscalYearId == null) {
+    fiscalYear = getCurrentFiscalYear();
+  }
+  else {
+    fiscalYear = getFiscalYear(fiscalYearId);
+  }
   var fiscalYearCode = fiscalYear['code'];
   
   //GET ALL OF THE ACCOUNTS
@@ -232,6 +243,23 @@ function getSpent() {
   
 }
 
+function getFiscalYear(fiscalYearId) {
+  return queryFiscalYear("/finance/fiscal-years/" + fiscalYearId);
+}
+
+function getCurrentFiscalYear() {
+  return queryFiscalYear("/finance/fiscal-years/" +  "/finance/ledgers/cdef2609-ba0a-4f42-abfb-14d315698d03/current-fiscal-year");
+}
+
+function queryFiscalYear(path) {
+  let config = JSON.parse(PropertiesService.getScriptProperties().getProperty("config"));
+  var fiscalYearQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) + path;
+  Logger.info("getFiscalYear query: " + fiscalYearQuery);
+  var fiscalYearResponse = UrlFetchApp.fetch(fiscalYearQuery, FOLIOAUTHLIBRARY.getHttpGetOptions());
+  var fiscalYear = JSON.parse(fiscalYearResponse.getContentText());
+  Logger.info("Using specified fiscal year: " + JSON.stringify(fiscalYear));
+  return fiscalYear;
+}
 
 function getProjectCodeTag(tagCollection) {
   for(var t = 0; t < tagCollection.length; t++){
@@ -247,4 +275,24 @@ function getObjectCodeTag(tagCollection) {
    if(tag.includes("OBJ-CD")) return tag;
   }
   return "unknown";
+}
+
+/* Data used by sidebar html */
+
+function preloadSidebarData() {
+  let fiscalYears = preloadFiscalYearOptions();
+  PropertiesService.getScriptProperties().setProperty("fiscalYears", fiscalYears);
+}
+
+function getFiscalYearOptions() {  // eslint-disable-line no-unused-vars
+  return PropertiesService.getScriptProperties().getProperty("fiscalYears");
+}
+
+function preloadFiscalYearOptions() {  // eslint-disable-line no-unused-vars
+  let config = JSON.parse(PropertiesService.getScriptProperties().getProperty("config"));
+  var fiscalYearsQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) +
+    "/finance/fiscal-years?limit=100&query=cql.allRecords==1 sortby code/sort.descending";
+  var fiscalYearsResponse = UrlFetchApp.fetch(fiscalYearsQuery, FOLIOAUTHLIBRARY.getHttpGetOptions());
+  var fiscalYearsResponseText = fiscalYearsResponse.getContentText();
+  return fiscalYearsResponseText;
 }
