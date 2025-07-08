@@ -22,6 +22,7 @@ COLUMN_INVOICE_DATE = next_col++;
 COLUMN_PO_NUM = next_col++;
 COLUMN_TITLE = next_col++;
 COLUMN_VENDOR = next_col++;
+COLUMN_PAYMENT_METHOD = next_col++;
 COLUMN_ENCUMBERED = next_col++;
 COLUMN_VENDOR_INVOICE_NUM = next_col++;
 COLUMN_ACTUAL = next_col++;
@@ -29,6 +30,20 @@ COLUMN_SHIPPING = next_col++;
 COLUMN_FEES = next_col++;
 COLUMN_OTHER = next_col++;
 COLUMN_FOLIO_DOC_LINK = next_col++;
+
+// Payment Methods
+// From https://github.com/folio-org/acq-models/blob/master/mod-orgs/schemas/account.json
+const PAYMEMT_METHODS = [
+  "Cash",
+  "Credit Card",
+  "EFT",
+  "Deposit Account",
+  "Physical Check",
+  "Bank Draft",
+  "Internal Transfer",
+  "Other",
+];
+const PAYMENT_METHODS_RULE = SpreadsheetApp.newDataValidation().requireValueInList(PAYMEMT_METHODS).build();
 
 function createTemplate() {
 
@@ -49,6 +64,7 @@ function createTemplate() {
   outputRange.getCell(1, COLUMN_PO_NUM).setValue("PO ID:").setFontWeight("bold").setBackground("#F5F5F5");
   outputRange.getCell(1, COLUMN_TITLE).setValue("TITLE:").setFontWeight("bold").setBackground("#F5F5F5");
   outputRange.getCell(1, COLUMN_VENDOR).setValue("VENDOR:").setFontWeight("bold").setBackground("#F5F5F5");
+  outputRange.getCell(1, COLUMN_PAYMENT_METHOD).setValue("PAYMENT METHOD:").setFontWeight("bold").setBackground("#F5F5F5");
   outputRange.getCell(1, COLUMN_ENCUMBERED).setValue("ENCUMBERED:").setFontWeight("bold").setBackground("#F5F5F5");
   outputRange.getCell(1, COLUMN_VENDOR_INVOICE_NUM).setValue("VENDOR INVOICE #:").setFontWeight("bold").setBackground("#F5F5F5");
   outputRange.getCell(1, COLUMN_ACTUAL).setValue("ACTUAL:").setFontWeight("bold").setBackground("#F5F5F5");
@@ -106,6 +122,7 @@ function payThese() {
     Logger.log(vendorInvoiceNumber);
 
     poNumber = range.getCell(i + 1, COLUMN_PO_NUM).getValue();
+    var paymentMethod = range.getCell(i + 1, COLUMN_PAYMENT_METHOD).getValue();
 
     var poQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) +
       "/orders/composite-orders?limit=30&query=(poNumber==" + poNumber + ")"
@@ -142,6 +159,7 @@ function payThese() {
 
 
       newInvoice.vendorId = aPo.purchaseOrders[0].vendor;
+      newInvoice.paymentMethod = paymentMethod;
       listOfInvoices[vendorInvoiceNumber] = newInvoice;
 
     }
@@ -367,6 +385,12 @@ function lookupPOs() {
     //WRITE THE PO INFO TO THE ROW
     range.getCell(i + 1, COLUMN_TITLE).setValue(title);
     range.getCell(i + 1, COLUMN_VENDOR).setValue(vendor.name);
+
+    // testing only
+    // vendor.paymentMethod = "Internal Transfer";
+
+    range.getCell(i + 1, COLUMN_PAYMENT_METHOD).setDataValidation(PAYMENT_METHODS_RULE);
+    range.getCell(i + 1, COLUMN_PAYMENT_METHOD).setValue(vendor.paymentMethod);
     range.getCell(i + 1, COLUMN_ENCUMBERED).setValue(encumbered);
 
     if (invoices.totalRecords > 0) {
