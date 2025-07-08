@@ -1,9 +1,9 @@
 function authenticateExample(baseOkapi) {
   //AUTHENTICATE
   // Make a POST request with a JSON payload.
-   var headers = {
-    "Accept" : "application/json,text/plain",
-     "x-okapi-tenant" : "lu"
+  var headers = {
+    "Accept": "application/json,text/plain",
+    "x-okapi-tenant": "lu"
   };
   var data = {
     'tenant': 'redacted',
@@ -11,11 +11,11 @@ function authenticateExample(baseOkapi) {
     'password': 'redacted',
   };
   var options = {
-    'method' : 'post',
+    'method': 'post',
     'contentType': 'application/json',
-    'headers':headers,
+    'headers': headers,
     // Convert the JavaScript object to a JSON string.
-    'payload' : JSON.stringify(data)
+    'payload': JSON.stringify(data)
   };
   var response = UrlFetchApp.fetch(baseOkapi + '/authn/login', options);
   var returnHeaders = response.getHeaders();
