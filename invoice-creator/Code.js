@@ -17,6 +17,18 @@ function onInstall() {
   onOpen();
 }
 
+var next_col = 1;
+COLUMN_INVOICE_DATE = next_col++;
+COLUMN_PO_NUM = next_col++;
+COLUMN_TITLE = next_col++;
+COLUMN_VENDOR = next_col++;
+COLUMN_ENCUMBERED = next_col++;
+COLUMN_VENDOR_INVOICE_NUM = next_col++;
+COLUMN_ACTUAL = next_col++;
+COLUMN_SHIPPING = next_col++;
+COLUMN_FEES = next_col++;
+COLUMN_OTHER = next_col++;
+COLUMN_FOLIO_DOC_LINK = next_col++;
 
 function createTemplate() {
 
@@ -33,22 +45,22 @@ function createTemplate() {
   }
 
   var outputRange = settingsSheet.getRange(1, 1, 37, 15);
-  outputRange.getCell(1, 1).setValue("INVOICE DATE (yyyy-mm-dd):").setFontWeight("bold").setBackground("#F5F5F5");
-  outputRange.getCell(1, 2).setValue("PO ID:").setFontWeight("bold").setBackground("#F5F5F5");
-  outputRange.getCell(1, 3).setValue("TITLE:").setFontWeight("bold").setBackground("#F5F5F5");
-  outputRange.getCell(1, 4).setValue("VENDOR:").setFontWeight("bold").setBackground("#F5F5F5");
-  outputRange.getCell(1, 5).setValue("ENCUMBERED:").setFontWeight("bold").setBackground("#F5F5F5");
-  outputRange.getCell(1, 6).setValue("VENDOR INVOICE #:").setFontWeight("bold").setBackground("#F5F5F5");
-  outputRange.getCell(1, 7).setValue("ACTUAL:").setFontWeight("bold").setBackground("#F5F5F5");
-  outputRange.getCell(1, 8).setValue("SHIPPING:").setFontWeight("bold").setBackground("#F5F5F5");
-  outputRange.getCell(1, 9).setValue("FEES:").setFontWeight("bold").setBackground("#F5F5F5");
-  outputRange.getCell(1, 10).setValue("OTHER:").setFontWeight("bold").setBackground("#F5F5F5");
-  outputRange.getCell(1, 11).setValue("FOLIO DOC LINK:").setFontWeight("bold").setBackground("#F5F5F5");
+  outputRange.getCell(1, COLUMN_INVOICE_DATE).setValue("INVOICE DATE (yyyy-mm-dd):").setFontWeight("bold").setBackground("#F5F5F5");
+  outputRange.getCell(1, COLUMN_PO_NUM).setValue("PO ID:").setFontWeight("bold").setBackground("#F5F5F5");
+  outputRange.getCell(1, COLUMN_TITLE).setValue("TITLE:").setFontWeight("bold").setBackground("#F5F5F5");
+  outputRange.getCell(1, COLUMN_VENDOR).setValue("VENDOR:").setFontWeight("bold").setBackground("#F5F5F5");
+  outputRange.getCell(1, COLUMN_ENCUMBERED).setValue("ENCUMBERED:").setFontWeight("bold").setBackground("#F5F5F5");
+  outputRange.getCell(1, COLUMN_VENDOR_INVOICE_NUM).setValue("VENDOR INVOICE #:").setFontWeight("bold").setBackground("#F5F5F5");
+  outputRange.getCell(1, COLUMN_ACTUAL).setValue("ACTUAL:").setFontWeight("bold").setBackground("#F5F5F5");
+  outputRange.getCell(1, COLUMN_SHIPPING).setValue("SHIPPING:").setFontWeight("bold").setBackground("#F5F5F5");
+  outputRange.getCell(1, COLUMN_FEES).setValue("FEES:").setFontWeight("bold").setBackground("#F5F5F5");
+  outputRange.getCell(1, COLUMN_OTHER).setValue("OTHER:").setFontWeight("bold").setBackground("#F5F5F5");
+  outputRange.getCell(1, COLUMN_FOLIO_DOC_LINK).setValue("FOLIO DOC LINK:").setFontWeight("bold").setBackground("#F5F5F5");
   //settingsSheet.autoResizeColumns(1, 15);
   //outputRange.setNumberFormat("@");
-  settingsSheet.getRange(2, 1, 50, 1).setNumberFormat('yyyy-mm-dd');
+  settingsSheet.getRange(2, COLUMN_INVOICE_DATE, 50, 1).setNumberFormat('yyyy-mm-dd');
   settingsSheet.setColumnWidth(1, 100);
-  settingsSheet.getRange(1, 1).setWrap(true);
+  settingsSheet.getRange(1, COLUMN_INVOICE_DATE).setWrap(true);
   settingsSheet.getRange(1, 1, 50, 50).setFontFamily('Cabin');
 
 
@@ -90,10 +102,10 @@ function payThese() {
   for (var i = 1; i < numRows; i++) {
     var absoluteRow = firstRow + i;
     Logger.log("absoluteRow " + absoluteRow);
-    vendorInvoiceNumber = range.getCell(i + 1, 6).getValue();
+    vendorInvoiceNumber = range.getCell(i + 1, COLUMN_VENDOR_INVOICE_NUM).getValue();
     Logger.log(vendorInvoiceNumber);
 
-    poNumber = range.getCell(i + 1, 2).getValue();
+    poNumber = range.getCell(i + 1, COLUMN_PO_NUM).getValue();
 
     var poQuery = FOLIOAUTHLIBRARY.getBaseOkapi(config.environment) +
       "/orders/composite-orders?limit=30&query=(poNumber==" + poNumber + ")"
@@ -125,7 +137,7 @@ function payThese() {
     if (listOfInvoices[vendorInvoiceNumber] == null) {
       //CREATE INVOICE AND ADD IT TO THE LIST
       var newInvoice = new Invoice(vendorInvoiceNumber);
-      newInvoice.invoiceDate = range.getCell(i + 1, 1).getValue();
+      newInvoice.invoiceDate = range.getCell(i + 1, COLUMN_INVOICE_DATE).getValue();
 
 
 
@@ -137,11 +149,11 @@ function payThese() {
 
 
     //GET THE INFORMATION ABOUT THE INVOICE LINE
-    var amount = range.getCell(i + 1, 7).getValue();
-    var shipping = range.getCell(i + 1, 8).getValue();
-    var fees = range.getCell(i + 1, 9).getValue();
-    var otherAdj = range.getCell(i + 1, 10).getValue();
-    var poNumber = range.getCell(i + 1, 2).getValue();
+    var amount = range.getCell(i + 1, COLUMN_ACTUAL).getValue();
+    var shipping = range.getCell(i + 1, COLUMN_SHIPPING).getValue();
+    var fees = range.getCell(i + 1, COLUMN_FEES).getValue();
+    var otherAdj = range.getCell(i + 1, COLUMN_OTHER).getValue();
+    var poNumber = range.getCell(i + 1, COLUMN_PO_NUM).getValue();
     var invoiceLine = new InvoiceLine(onePoLine);
 
     Logger.log("BEFORE--->" + JSON.stringify(invoiceLine))
@@ -193,15 +205,15 @@ function payThese() {
     }
 
 
-    if (!range.getCell(i + 1, 7).isBlank()) {
+    if (!range.getCell(i + 1, COLUMN_ACTUAL).isBlank()) {
       invoiceLine.subTotal = amount;
     }
     else {
       invoiceLine.subTotal = onePoLine.cost.poLineEstimatedPrice;
     }
-    if (!range.getCell(i + 1, 8).isBlank()) invoiceLine.addAdjustment(new Adjustment("shipping", shipping));
-    if (!range.getCell(i + 1, 9).isBlank()) invoiceLine.addAdjustment(new Adjustment("fees", fees));
-    if (!range.getCell(i + 1, 10).isBlank()) invoiceLine.addAdjustment(new Adjustment("other", otherAdj));
+    if (!range.getCell(i + 1, COLUMN_SHIPPING).isBlank()) invoiceLine.addAdjustment(new Adjustment("shipping", shipping));
+    if (!range.getCell(i + 1, COLUMN_FEES).isBlank()) invoiceLine.addAdjustment(new Adjustment("fees", fees));
+    if (!range.getCell(i + 1, COLUMN_OTHER).isBlank()) invoiceLine.addAdjustment(new Adjustment("other", otherAdj));
 
 
     (listOfInvoices[vendorInvoiceNumber]).addInvoiceLine(invoiceLine);
@@ -255,7 +267,7 @@ function payThese() {
       var searchResult = findInRow(listOfPos[invoiceLine.poLineId], range)
       Logger.log("search result" + searchResult);
       //var searchResult = columnValues.findIndex(createdInvoice.vendorInvoiceNo);
-      range.getCell(searchResult, 11).setValue(
+      range.getCell(searchResult, COLUMN_FOLIO_DOC_LINK).setValue(
         FOLIOAUTHLIBRARY.getBaseFolio(config.environment) + "/invoice/view/" + createdInvoice.id);
 
 
@@ -307,7 +319,7 @@ function lookupPOs() {
   for (var i = 1; i < numRows; i++) {
     var absoluteRow = firstRow + i;
     Logger.log("absoluteRow " + absoluteRow);
-    poNumber = range.getCell(i + 1, 2).getValue();
+    poNumber = range.getCell(i + 1, COLUMN_PO_NUM).getValue();
     // poLineAmount = range.getCell(i+1, 14).getValue();
     //Logger.log(range.getCell(absoluteRow, 14));
     //outputRange.getCell(i+2,1).setValue(poLineNumber).setBackgroundColor("#EAEAEA")
@@ -353,12 +365,12 @@ function lookupPOs() {
     var invoices = JSON.parse(invoiceResponse.getContentText());
 
     //WRITE THE PO INFO TO THE ROW
-    range.getCell(i + 1, 3).setValue(title);
-    range.getCell(i + 1, 4).setValue(vendor.name);
-    range.getCell(i + 1, 5).setValue(encumbered);
+    range.getCell(i + 1, COLUMN_TITLE).setValue(title);
+    range.getCell(i + 1, COLUMN_VENDOR).setValue(vendor.name);
+    range.getCell(i + 1, COLUMN_ENCUMBERED).setValue(encumbered);
 
     if (invoices.totalRecords > 0) {
-      range.getCell(i + 1, 2).setBackground('red');
+      range.getCell(i + 1, COLUMN_PO_NUM).setBackground('red');
     }
 
 
